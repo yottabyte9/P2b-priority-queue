@@ -7,7 +7,7 @@
 #include <deque>
 #include <utility>
 
-// A specialized version of the 'priority_queue' ADT implemented as a pairing heap.
+// A specialized version of the '' ADT implemented as a pairing heap.
 template<typename TYPE, typename COMP_FUNCTOR = std::less<TYPE>>
 class PairingPQ : public Eecs281PQ<TYPE, COMP_FUNCTOR> {
     // This is a way to refer to the base class object.
@@ -207,19 +207,19 @@ public:
         return count;
     } // size()
 
-    // Description: Return true if the priority_queue is empty.
+    // Description: Return true if the  is empty.
     // Runtime: O(1)
     virtual bool empty() const {
         return !root;
     } // empty()
 
 
-    // Description: Updates the priority of an element already in the pairing
+    // Description: Updates the  of an element already in the pairing
     //              heap by replacing the element refered to by the Node with
     //              new_value.  Must maintain pairing heap invariants.
     //
-    // PRECONDITION: The new priority, given by 'new_value' must be more
-    //              extreme (as defined by comp) than the old priority.
+    // PRECONDITION: The new , given by 'new_value' must be more
+    //              extreme (as defined by comp) than the old .
     //
     // Runtime: As discussed in reading material.
     void updateElt(Node* node, const TYPE & new_value) { 
@@ -237,7 +237,12 @@ public:
     //       when you implement updateElt() and updatePriorities().
     Node* addNode(const TYPE & val) {
         Node* temp = new Node(val);
-        root = meld(temp, root);
+        if(root == nullptr){
+            root = temp;
+        }
+        else{
+            root = meld(temp, root);
+        }
         count++;
         return (temp);
     } // addNode()
