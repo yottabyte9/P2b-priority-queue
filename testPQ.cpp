@@ -85,6 +85,7 @@ void testPrimitiveOperations() {
 
     eecsPQ.pop();
     assert(eecsPQ.size() == 1);
+    std::cout << eecsPQ.top() << std::endl;
     assert(eecsPQ.top() == 3);
     assert(not eecsPQ.empty());
 
@@ -129,8 +130,7 @@ void testHiddenData() {
 template <template <typename...> typename PQ>
 void testUpdatePriorities() {
     std::vector<int> data {
-        1,
-        5,
+        5,3,7,9,4,1,11
     };
 
     PQ<const int*, IntPtrComp> pq {};
@@ -142,14 +142,46 @@ void testUpdatePriorities() {
         eecsPQ.push(&datum);
     }
 
+    assert(*eecsPQ.top() == 11);
+
     // Change some element in data (which is pointed to by an element in pq).
     // This new value should be higher than any other so its address will
     // wind qt the top adter updatePriorities.
-    auto& datum = data[0];
-    datum = 10;
+    auto& datum = data[2];
+    datum = 12;
     eecsPQ.updatePriorities();
-    assert(*eecsPQ.top() == 10);
+    assert(*eecsPQ.top() == 12);
     assert(eecsPQ.top() == &datum);
+
+    eecsPQ.pop();
+    eecsPQ.pop();
+    assert(*eecsPQ.top() == 9);
+
+    /* auto& temp = data[0];
+
+    const int* temp = 40;
+    eecsPQ.push(const &temp);
+    assert(*eecsPQ.top() == 40);
+    eecsPQ.push(3); */
+
+    std::vector<int> data1 {
+        5,7,3,9,1
+    };
+
+    PQ<const int*, IntPtrComp> pq1 {};
+    Eecs281PQ<const int*, IntPtrComp>& eecsPQ1 = pq1;
+
+    // NOTE: If you add more data to the vector, don't push the pointers
+    //   until AFTER the vector stops changing size! Think about why.
+    for (auto& datum : data1) {
+        eecsPQ1.push(&datum);
+    }
+
+    assert(*eecsPQ1.top() == 9);
+    eecsPQ1.pop();
+    assert(*eecsPQ1.top() == 7);
+    eecsPQ1.pop();
+    assert(*eecsPQ1.top() == 5);
 
     // TODO: Add more testing here as you see fit.
 }
@@ -163,8 +195,7 @@ void testPairing() {
 
     {
         const std::vector<int> vec {
-            1,
-            0,
+            9, 5, 4, 2, 1, 0,
         };
 
         std::cout << "Calling constructors" << std::endl;
@@ -177,21 +208,36 @@ void testPairing() {
 
         // Copy-assignment operator
         PairingPQ<int> pairing3 {};
-        pairing3 = pairing2;
+        pairing3 = pairing1;
+
+        PairingPQ<int> pairing4 {};
+        pairing4 = pairing1;
+
 
         // A reference to a PairingPQ<T> is a reference to an Eecs281PQ<T>.
         // Yay for polymorphism! We can therefore write:
         Eecs281PQ<int>& pq1 = pairing1;
         Eecs281PQ<int>& pq2 = pairing2;
         Eecs281PQ<int>& pq3 = pairing3;
-
+        Eecs281PQ<int>& pq4 = pairing4;
+        std::cout << pq2.size() << std::endl;
+        std::cout << pq3.size() << std::endl;
         pq1.push(3);
+        assert(pq1.size() == 7);
+        assert(pq2.size() == 6);
+        std::cout << pq2.size() << std::endl;
+        pq1.pop();
         pq2.pop();
-        assert(pq1.size() == 3);
         assert(not pq1.empty());
-        assert(pq1.top() == 3);
+        assert(pq1.top() == 5);
+        assert(pq2.top() == 5);
         pq2.push(pq3.top());
         assert(pq2.top() == pq3.top());
+        
+        PairingPQ<int>::Node* temp = pairing4.addNode(3);
+        pairing4.updateElt(temp, 6);
+        pq4.pop();
+        assert(pq4.top() == 6);
 
         std::cout << "Basic tests done." << std::endl;
 
