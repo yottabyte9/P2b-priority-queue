@@ -72,8 +72,7 @@ public:
     // Runtime: O(n)
     PairingPQ(const PairingPQ& other) :
         BaseClass{ other.compare } {
-        root = nullptr;
-        *this = other;
+        copypq(other);
     } // PairingPQ()
 
 
@@ -81,11 +80,9 @@ public:
     // Runtime: O(n)
     // TODO: when you implement this function, uncomment the parameter names.
     PairingPQ& operator=(const PairingPQ& rhs) {
-        if (this == &rhs) {
-            return *this;
-        }
-        deletepq(root);
-        root = copypq(rhs.root);
+        PairingPQ other(rhs);
+        std::swap(this->count, other.count);
+        std::swap(this->root, other.root);
         return *this;
     } // operator=()
 
@@ -93,7 +90,22 @@ public:
     // Description: Destructor
     // Runtime: O(n)
     ~PairingPQ() {
-        deletepq(root);
+        if(root == nullptr){
+            return;
+        }
+        std::deque<Node*> queue;
+        queue.push_back(root);
+        while(queue.size() > 0){
+            Node* temp = queue.front();
+            if(temp->sibling != nullptr){
+                queue.push_back(temp->sibling);
+            }
+            if(temp->child != nullptr){
+                queue.push_back(temp->child);
+            }
+            queue.pop_front();
+            delete temp;
+        }
     } // ~PairingPQ()
 
 
@@ -150,43 +162,35 @@ public:
     // this project.
     // Runtime: Amortized O(log(n))
     virtual void pop() {
-        Node *root_holder = root;
-        if(!root->child){
+        if(root == nullptr){
+            return;
+        }
+        if(root->child == nullptr){
+            delete root;
             root = nullptr;
-            count --;
-            delete root_holder;
-            return;
-        }
-        if(!root->child->sibling){
-            root = root->child;
             count--;
-            delete root_holder;
             return;
         }
+        std::deque<Node*> queue;
+        Node* c = root->child;
+        while(c != nullptr){
+            Node* temp = c->sibling;
+            c->sibling = nullptr;
+            c->parent = nullptr;
+            queue.push_back(c);
+            c = temp;
+        }
+        while(queue.size() > 1){
+            Node* m1 = queue.front();
+            queue.pop_front();
+            Node* m2 = queue.front();
+            queue.pop_front();
+            Node* mf = meld(m1,m2);
+            queue.push_back(mf);
+        }
+        delete root;
+        root = queue[0];
         count--;
-        
-        std::deque<Node*> dq;
-        Node *c = root->child;
-        while(!c) {
-            dq.push_back(c);
-            c->parent->sibling = nullptr;
-            c = c->sibling;
-        }
-        int i = 0;
-        while (i < int(dq.size()) - 1) {
-            meld(dq[i], dq[i + 1]);
-            i += 2;
-        }
-        i -= 2;
-        if(i == int(dq.size())-3){
-            meld(dq[i], dq[i+2]);
-        }
-        while(i < 2){
-            meld(dq[i], dq[i-2]);
-            i -= 2;
-        }
-        root = dq.front();
-        delete root_holder;
     } // pop()
 
 
@@ -224,7 +228,25 @@ public:
     // Runtime: As discussed in reading material.
     void updateElt(Node* node, const TYPE & new_value) { 
         node->elt = new_value;
-        updatePriorities();
+        if (node == root) {
+            return; //will always increase in priority so we're good
+        }
+        Node* temp = node->parent->child;
+        if(temp == node){
+            temp->parent->child = temp->sibling;
+            temp->parent = nullptr;
+            temp->sibling = nullptr;
+            root = meld(temp, root);
+            return;
+        }
+        while(temp->sibling != nullptr && temp->sibling != node){
+            temp = temp->sibling;
+        }
+        temp->sibling = node->sibling;
+        node->sibling = nullptr;
+        node->parent = nullptr;
+        root = meld(root, node);
+
     } // updateElt()
 
 
@@ -282,30 +304,24 @@ private:
         left = right;
         return right;
     }
-
     
-    Node* copypq(Node* node){
-        if(!node) return nullptr;
-        
-        Node *temproot = new Node(node->getElt());
-        temproot->sibling = copypq(node->sibling);
-        temproot->child = copypq(node->child);
-        
-        if(temproot->sibling != nullptr){
-            temproot->sibling->parent = temproot;
+    void copypq(const PairingPQ &pq) {
+        if (pq.root == nullptr) {
+            return;
         }
-        if(temproot->child != nullptr){
-            temproot->child->parent = temproot;
-        }
-        
-        return temproot;
-    }
-
-    void deletepq(Node *node){
-        if(node != nullptr){
-            deletepq(node->sibling);
-            deletepq(node->child);
-            delete node;
+        std::deque<Node*> other;
+        other.push_back(pq.root);
+        root = nullptr;
+        while (!other.empty()) {
+            Node* temp = other.front();
+            if(temp->child != nullptr){
+                other.push_back(temp->child);
+            }
+            if(temp->sibling != nullptr){
+                other.push_back(temp->sibling);
+            }
+            push(temp->elt);
+            other.pop_front();
         }
     }
 };
