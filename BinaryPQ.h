@@ -27,6 +27,7 @@ public:
     template<typename InputIterator>
     BinaryPQ(InputIterator start, InputIterator end, COMP_FUNCTOR comp = COMP_FUNCTOR()) :
         BaseClass{ comp } {
+        data.push_back(*start);
         for(InputIterator i = start; i != end; i++){
             data.push_back(*i);
         }
@@ -44,7 +45,7 @@ public:
     //              'rebuilds' the heap by fixing the heap invariant.
     // Runtime: O(n)
     virtual void updatePriorities() {
-        for(int i=int(data.size()-1); i>=0; i--){
+        for(int i=int(data.size())/2; i>=1; i--){
             fixdown(i);
         }
     } // updatePriorities()
@@ -53,10 +54,11 @@ public:
     // Description: Add a new element to the PQ.
     // Runtime: O(log(n))
     virtual void push(const TYPE &val) {
-        data.push_back(val);
-        if(size() > 1){
-            fixup(int(data.size()-1));
+        if(data.size() == 0){
+            data.push_back(val);
         }
+        data.push_back(val);
+        fixup(int(data.size())-1);
         
     } // push()
 
@@ -68,12 +70,9 @@ public:
     // familiar with them, you do not need to use exceptions in this project.
     // Runtime: O(log(n))
     virtual void pop() {
-        std::swap(data[0],data[data.size() - 1]);
+        std::swap(data[1],data[this->size()]);
         data.pop_back();
-        if(size() > 1){
-            fixdown(0);
-        }
-        
+        fixdown(1);
     } // pop()
 
 
@@ -83,21 +82,21 @@ public:
     //              that might make it no longer be the most extreme element.
     // Runtime: O(1)
     virtual const TYPE &top() const {
-        return data[0];
+        return data[1];
     } // top()
 
 
     // Description: Get the number of elements in the PQ.
     // Runtime: O(1)
     virtual std::size_t size() const {
-        return data.size();
+        return data.size()-1;
     } // size()
 
 
     // Description: Return true if the PQ is empty.
     // Runtime: O(1)
     virtual bool empty() const {
-        return data.empty();
+        return data.size()==1;
     } // empty()
 
 
@@ -109,19 +108,19 @@ private:
     //       function, or check data.size().
 
     void fixup(int k){
-        while(k > 0 && this->compare(data[k/2], data[k])){
+        while(k > 1 && this->compare(data[k/2], data[k])){
             std::swap(data[k/2], data[k]);
             k /= 2;
         }
     }
 
     void fixdown(int k){
-        while(2*k < (int)size()){
+        while(2*k <= (int)size()){
             int j = 2*k;
-            if(j < (int)size()-1 && this->compare(data[j], data[j+1])){
+            if(j < (int)size() && this->compare(data[j], data[j+1])){
                 j++;
             }
-            else if(this->compare(data[k], data[j])){
+            if(!this->compare(data[k], data[j])){
                 break;
             }
             std::swap(data[k], data[j]);
